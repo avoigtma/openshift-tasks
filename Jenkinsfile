@@ -45,20 +45,20 @@ node('maven') {
       echo "New Tag: ${newTag}"
 
       // Replace myproject-dev with the name of your dev project
-      openshiftBuild bldCfg: 'myproject', checkForTriggeredDeployments: 'false', namespace: 'myproject-dev', showBuildLogs: 'false', verbose: 'false', waitTime: '', waitUnit: 'sec'
-      openshiftVerifyBuild bldCfg: 'myproject', checkForTriggeredDeployments: 'false', namespace: 'myproject-dev', verbose: 'false', waitTime: ''
-      openshiftTag alias: 'false', destStream: 'myproject', destTag: newTag, destinationNamespace: 'myproject-dev', namespace: 'myproject-dev', srcStream: 'myproject', srcTag: 'latest', verbose: 'false'
+      openshiftBuild bldCfg: 'tasks', checkForTriggeredDeployments: 'false', namespace: 'myproject-dev', showBuildLogs: 'false', verbose: 'false', waitTime: '', waitUnit: 'sec'
+      openshiftVerifyBuild bldCfg: 'tasks', checkForTriggeredDeployments: 'false', namespace: 'myproject-dev', verbose: 'false', waitTime: ''
+      openshiftTag alias: 'false', destStream: 'tasks', destTag: newTag, destinationNamespace: 'myproject-dev', namespace: 'myproject-dev', srcStream: 'tasks', srcTag: 'latest', verbose: 'false'
   }
 
   stage('Deploy to Dev') {
     // Patch the DeploymentConfig so that it points to the latest TestingCandidate-${version} Image.
     // Replace myproject-dev with the name of your dev project
     sh "oc project myproject-dev"
-    sh "oc patch dc myproject --patch '{\"spec\": { \"triggers\": [ { \"type\": \"ImageChange\", \"imageChangeParams\": { \"containerNames\": [ \"myproject\" ], \"from\": { \"kind\": \"ImageStreamTag\", \"namespace\": \"myproject-dev\", \"name\": \"myproject:TestingCandidate-$version\"}}}]}}' -n myproject-dev"
+    sh "oc patch dc myproject --patch '{\"spec\": { \"triggers\": [ { \"type\": \"ImageChange\", \"imageChangeParams\": { \"containerNames\": [ \"tasks\" ], \"from\": { \"kind\": \"ImageStreamTag\", \"namespace\": \"myproject-dev\", \"name\": \"tasks:TestingCandidate-$version\"}}}]}}' -n myproject-dev"
 
-      openshiftDeploy depCfg: 'myproject', namespace: 'myproject-dev', verbose: 'false', waitTime: '', waitUnit: 'sec'
-      openshiftVerifyDeployment depCfg: 'myproject', namespace: 'myproject-dev', replicaCount: '1', verbose: 'false', verifyReplicaCount: 'false', waitTime: '', waitUnit: 'sec'
-      openshiftVerifyService namespace: 'myproject-dev', svcName: 'myproject', verbose: 'false'
+      openshiftDeploy depCfg: 'tasks', namespace: 'myproject-dev', verbose: 'false', waitTime: '', waitUnit: 'sec'
+      openshiftVerifyDeployment depCfg: 'tasks', namespace: 'myproject-dev', replicaCount: '1', verbose: 'false', verifyReplicaCount: 'false', waitTime: '', waitUnit: 'sec'
+      openshiftVerifyService namespace: 'myproject-dev', svcName: 'tasks', verbose: 'false'
   }
 
   stage('Integration Test') {
@@ -68,22 +68,22 @@ node('maven') {
     echo "New Tag: ${newTag}"
 
     // Replace myproject-dev with the name of your dev project
-    openshiftTag alias: 'false', destStream: 'myproject', destTag: newTag, destinationNamespace: 'myproject-dev', namespace: 'myproject-dev', srcStream: 'myproject', srcTag: 'latest', verbose: 'false'
+    openshiftTag alias: 'false', destStream: 'tasks', destTag: newTag, destinationNamespace: 'myproject-dev', namespace: 'myproject-dev', srcStream: 'tasks', srcTag: 'latest', verbose: 'false'
   }
 
   // Blue/Green Deployment into Production
   // -------------------------------------
-  def dest   = "myproject-green"
+  def dest   = "tasks-green"
   def active = ""
 
   stage('Prep Production Deployment') {
     // Replace myproject-dev and myproject-test with
     // your project names
     sh "oc project myproject-test"
-    sh "oc get route myproject -n myproject-test -o jsonpath='{ .spec.to.name }' > activesvc.txt"
+    sh "oc get route tasks -n myproject-test -o jsonpath='{ .spec.to.name }' > activesvc.txt"
     active = readFile('activesvc.txt').trim()
-    if (active == "myproject-green") {
-      dest = "myproject-blue"
+    if (active == "tasks-green") {
+      dest = "tasks-blue"
     }
     echo "Active svc: " + active
     echo "Dest svc:   " + dest
@@ -106,8 +106,8 @@ node('maven') {
 
     // Replace myproject-test with the name of your
     // production project
-    sh 'oc patch route myproject -n myproject-test -p \'{"spec":{"to":{"name":"' + dest + '"}}}\''
-    sh 'oc get route myproject -n myproject-test > oc_out.txt'
+    sh 'oc patch route tasks -n myproject-test -p \'{"spec":{"to":{"name":"' + dest + '"}}}\''
+    sh 'oc get route tasks -n myproject-test > oc_out.txt'
     oc_out = readFile('oc_out.txt')
     echo "Current route configuration: " + oc_out
   }
