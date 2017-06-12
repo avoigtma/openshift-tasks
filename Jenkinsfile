@@ -54,7 +54,7 @@ node('maven') {
     // Patch the DeploymentConfig so that it points to the latest TestingCandidate-${version} Image.
     // Replace myproject-dev with the name of your dev project
     sh "oc project myproject-dev"
-    sh "oc patch dc myproject --patch '{\"spec\": { \"triggers\": [ { \"type\": \"ImageChange\", \"imageChangeParams\": { \"containerNames\": [ \"tasks\" ], \"from\": { \"kind\": \"ImageStreamTag\", \"namespace\": \"myproject-dev\", \"name\": \"tasks:TestingCandidate-$version\"}}}]}}' -n myproject-dev"
+    sh "oc patch dc tasks --patch '{\"spec\": { \"triggers\": [ { \"type\": \"ImageChange\", \"imageChangeParams\": { \"containerNames\": [ \"tasks\" ], \"from\": { \"kind\": \"ImageStreamTag\", \"namespace\": \"myproject-dev\", \"name\": \"tasks:TestingCandidate-$version\"}}}]}}' -n myproject-dev"
 
       openshiftDeploy depCfg: 'tasks', namespace: 'myproject-dev', verbose: 'false', waitTime: '', waitUnit: 'sec'
       openshiftVerifyDeployment depCfg: 'tasks', namespace: 'myproject-dev', replicaCount: '1', verbose: 'false', verifyReplicaCount: 'false', waitTime: '', waitUnit: 'sec'
