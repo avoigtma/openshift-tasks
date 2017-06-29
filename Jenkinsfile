@@ -26,8 +26,7 @@ node('maven') {
 
 // Run this node on a Maven Slave
 // Maven Slaves have JDK and Maven already installed
-node {
-//node('maven') {
+node('maven') {
   // Make sure your nexus_openshift_settings.xml
   // Is pointing to your nexus instance
   //def mvnCmd = "mvn -s ./nexus_openshift_settings.xml"
