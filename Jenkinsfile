@@ -1,5 +1,21 @@
 #!groovy
 
+node {
+  echo "Global Jenkins node"
+  
+  @NonCPS
+  env.getEnvironment().each { name, value -> println "Name: $name -> Value $value" }
+}
+
+
+
+node('maven') {
+  echo "Jenkins Maven node"
+  
+  @NonCPS
+  env.getEnvironment().each { name, value -> println "Name: $name -> Value $value" }
+}
+
 // Run this node on a Maven Slave
 // Maven Slaves have JDK and Maven already installed
 node('maven') {
