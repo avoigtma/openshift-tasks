@@ -30,7 +30,7 @@ node('maven') {
   // Make sure your nexus_openshift_settings.xml
   // Is pointing to your nexus instance
   //def mvnCmd = "mvn -s ./nexus_openshift_settings.xml"
-  def mvnCmd = "mvn"
+  def mvnCmd = "mvn -DMAVEN_MIRROR_URL=http://moe:8081/content/groups/public"
 
   stage('Checkout Source') {
     // Get Source Code from SCM (Git) as configured in the Jenkins Project
