@@ -3,8 +3,12 @@
 node {
   echo "Global Jenkins node"
   
-  @NonCPS
-  env.getEnvironment().each { name, value -> println "Name: $name -> Value $value" }
+  sh 'env > env1.txt'
+  String[] envs = readFile('env1.txt').split("\r?\n")
+
+  for(String vars: envs){
+    println(vars)
+  }
 }
 
 
@@ -12,8 +16,12 @@ node {
 node('maven') {
   echo "Jenkins Maven node"
   
-  @NonCPS
-  env.getEnvironment().each { name, value -> println "Name: $name -> Value $value" }
+  sh 'env > env2.txt'
+  String[] envs = readFile('env2.txt').split("\r?\n")
+
+  for(String vars: envs){
+    println(vars)
+  }
 }
 
 // Run this node on a Maven Slave
