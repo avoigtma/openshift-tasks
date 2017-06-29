@@ -141,7 +141,7 @@ def requestUserInput(message) {
   } catch (err) {
       def user = err.getCauses()[0].getUser()
       echo "Aborted by:\n ${user}"
-      throw
+
   }
 }
 
