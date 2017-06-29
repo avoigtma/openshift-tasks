@@ -40,8 +40,8 @@ node('maven') {
     //...
   }
 
-    stage('Build OpenShift Image') {
-      def newTag = "TestingCandidate-${version}"
+  stage('Build OpenShift Image') {
+      def newTag = "DevCandidate-${version}"
       echo "New Tag: ${newTag}"
 
       // Replace myproject-dev with the name of your dev project
@@ -59,6 +59,22 @@ node('maven') {
       openshiftDeploy depCfg: 'tasks', namespace: 'myproject-dev', verbose: 'false', waitTime: '', waitUnit: 'sec'
       openshiftVerifyDeployment depCfg: 'tasks', namespace: 'myproject-dev', replicaCount: '1', verbose: 'false', verifyReplicaCount: 'false', waitTime: '', waitUnit: 'sec'
       openshiftVerifyService namespace: 'myproject-dev', svcName: 'tasks', verbose: 'false'
+  }
+
+  stage('Deploy to Test') {
+      def newTag = "TestingCandidate-${version}"
+      echo "New Tag: ${newTag}"
+    
+    requestUserInput('Release to TEST?')
+
+    // Patch the DeploymentConfig so that it points to the latest TestingCandidate-${version} Image.
+    // Replace myproject-dev with the name of your dev project
+    sh "oc project myproject-test"
+    sh "oc patch dc tasks --patch '{\"spec\": { \"triggers\": [ { \"type\": \"ImageChange\", \"imageChangeParams\": { \"containerNames\": [ \"tasks\" ], \"from\": { \"kind\": \"ImageStreamTag\", \"namespace\": \"myproject-dev\", \"name\": \"tasks:TestingCandidate-$version\"}}}]}}' -n myproject-test"
+
+      openshiftDeploy depCfg: 'tasks', namespace: 'myproject-test', verbose: 'false', waitTime: '', waitUnit: 'sec'
+      openshiftVerifyDeployment depCfg: 'tasks', namespace: 'myproject-test', replicaCount: '1', verbose: 'false', verifyReplicaCount: 'false', waitTime: '', waitUnit: 'sec'
+      openshiftVerifyService namespace: 'myproject-test', svcName: 'tasks', verbose: 'false'
   }
 
   stage('Integration Test') {
@@ -110,6 +126,22 @@ node('maven') {
     sh 'oc get route tasks -n myproject-test > oc_out.txt'
     oc_out = readFile('oc_out.txt')
     echo "Current route configuration: " + oc_out
+  }
+}
+
+def requestUserInput(message) {
+  try {
+      timeout(time: 15, unit: 'SECONDS') {
+          input message: 'Do you want to release this build?',
+                parameters: [[$class: 'BooleanParameterDefinition',
+                              defaultValue: false,
+                              description: 'Ticking this box will do a release',
+                              name: 'Release']]
+      }
+  } catch (err) {
+      def user = err.getCauses()[0].getUser()
+      echo "Aborted by:\n ${user}"
+      throw
   }
 }
 
