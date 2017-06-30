@@ -157,7 +157,7 @@ node('maven') {
 
 def requestUserInput(message) {
   try {
-      timeout(time: 15, unit: 'SECONDS') {
+      timeout(time: 86400, unit: 'SECONDS') {
           input message: 'Do you want to release this build?',
                 parameters: [[$class: 'BooleanParameterDefinition',
                               defaultValue: false,
