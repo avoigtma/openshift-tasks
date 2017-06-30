@@ -88,10 +88,13 @@ node('maven') {
   }
 
   stage('Deploy to Test') {
+      def oldTag = "DevCandidate-${version}"
       def newTag = "TestingCandidate-${version}"
       echo "New Tag: ${newTag}"
     
     requestUserInput('Release to TEST?')
+
+    openshiftTag alias: 'false', destStream: 'tasks', destTag: newTag, destinationNamespace: 'myproject-dev', namespace: 'myproject-dev', srcStream: 'tasks', srcTag: oldTag, verbose: 'false'
 
     // Patch the DeploymentConfig so that it points to the latest TestingCandidate-${version} Image.
     // Replace myproject-dev with the name of your dev project
@@ -105,12 +108,12 @@ node('maven') {
 
   stage('Integration Test') {
     // ...
-
+    def oldTag = "TestingCandidate-${version}"
     def newTag = "ProdReady-${version}"
     echo "New Tag: ${newTag}"
 
     // Replace myproject-dev with the name of your dev project
-    openshiftTag alias: 'false', destStream: 'tasks', destTag: newTag, destinationNamespace: 'myproject-dev', namespace: 'myproject-dev', srcStream: 'tasks', srcTag: 'latest', verbose: 'false'
+    openshiftTag alias: 'false', destStream: 'tasks', destTag: newTag, destinationNamespace: 'myproject-dev', namespace: 'myproject-dev', srcStream: 'tasks', srcTag: oldTag, verbose: 'false'
   }
 
   // Blue/Green Deployment into Production
